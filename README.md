@@ -8,7 +8,7 @@ druid学习笔记
 （2）time column存储成CompressedLongs 65536/8=8192 <br>
 详见CompressedLongsIndexedSupplier，默认LZ4压缩，底层基于GenericIndexed格式，但是做了压缩。
 详细存储格式:<br>
-  分成8192个long一段，这8192个long使用LZ4压缩(https://github.com/jpountz/lz4-java),压缩完后,写到GenericIndexed里。<br>
+  分成8192个long一段，这8192个long使用LZ4压缩(https://github.com/jpountz/lz4-java), 压缩完后,写到GenericIndexed里。<br>
   读取的时候先根据index/8192算出来在那个段里面，然后index%8192算出在这个段里面的偏移，最终获取到数据。
 （3）metrics column
 
