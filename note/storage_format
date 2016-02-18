@@ -1,0 +1,78 @@
+
+数据存储格式：
+（1）通用存储格式 GenericIndexed/GenericIndexedWriter，可以Streams方式生成。
+分两部分：header/values, header存offset，values存实际的数据，所以根据index可以很快定位到读取出所在位置的数据。
+写的时候是两个文件单独生成，最后面会把两个文件合到一起，加上一个头部meta文件。
+  说明: 
+    往GenericIndexedWriter<String>里面写3个String："", "100", "200"
+    通过GenericIndexed读上来的结果是：null, "100", "200"
+    注意这里写下去的是""空字符串，读上来的是null。
+
+（2）time column存储成CompressedLongs 65536/8=8192 
+详见CompressedLongsIndexedSupplier，默认LZ4压缩，底层基于GenericIndexed格式，但是做了压缩。
+详细存储格式: 
+  分成8192个long一段，这8192个long使用LZ4压缩(https://github.com/jpountz/lz4-java), 压缩完后,写到GenericIndexed里。
+  读取的时候先根据index/8192算出来在那个段里面，然后index%8192算出在这个段里面的偏移，最终获取到数据。
+
+（3）metric columns
+  long类型，跟time column一样的存储格式
+  float类型，CompressedFloats（CompressedFloatsIndexedSupplier）跟CompressedLongs类似存储，只不过float是4个byte，所以一个段里面有16384个元素。
+  complex类型，直接用GenericIndexed存储，不分段。
+
+ (4) dimension columns
+  Column value dictionary: 存成GenericIndexed<String>
+  倒排: 存成GenericIndexed<ImmutableBitmap>
+  正排: 
+    单值 CompressedVSizeIntsIndexedSupplier
+    多值 CompressedVSizeIndexedSupplier
+  Spatial indexes: ImmutableRTree
+
+CompressedVSizeIntsIndexedSupplier分析: 
+1 chunkFactor 65536
+1 chunkBytes 65536
+2 chunkFactor 32768
+2 chunkBytes 65536
+3 chunkFactor 16384
+3 chunkBytes 49153
+4 chunkFactor 16384
+4 chunkBytes 65536
+分段存储压缩，跟CompressedLongs存储一样，底层是GenericIndexed。
+这里针对内容大小根据最大的int需要几个byte有优化，如果只要一个byte一个段里面可以存储65536个，如果是2个byte那么可以存32768个，如果3byte那么存16384个，如果4个byte那么存16384个。 
+每个段都是65536个byte大小。
+读取的时候根据index直接读取到该位置上面的值。
+
+CompressedVSizeIndexedSupplier分析:
+底层存储有两块:
+  offsetSupplier (CompressedVSizeIntsIndexedSupplier) 
+    //offsets - indexed integers of length num of rows + 1 representing offsets of starting index of first element of each row in values index
+    // last element represents the length of values column
+  valueSupplier (CompressedVSizeIntsIndexedSupplier)  values - indexed integers representing actual values in each row
+  List<Integer> offsetList = new ArrayList<>();
+  List<Integer> values = new ArrayList<>();
+  读取的时候很简单：
+    @Override
+    public IndexedInts get(int index)
+    {
+      final int offset = offsets.get(index);
+      final int size = offsets.get(index + 1) - offset;
+      return new IndexedInts()
+      {
+        @Override
+        public int size()
+        {
+          return size;
+        }
+
+        @Override
+        public int get(int index)
+        {
+          if (index >= size) {
+            throw new IllegalArgumentException(String.format("Index[%s] >= size[%s]", index, size));
+          }
+          return values.get(index + offset);
+        }
+      }
+    }
+
+
+

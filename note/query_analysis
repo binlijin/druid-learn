@@ -1,0 +1,9 @@
+
+
+（1）StorageAdapter（QueryableIndexStorageAdapter/IncrementalIndexStorageAdapter）返回 Sequence<Cursor>
+输入参数是(Filter filter, Interval interval, QueryGranularity gran)
+
+（2）然后各种query根据Sequence<Cursor>进行操作。
+
+
+

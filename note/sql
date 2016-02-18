@@ -1,0 +1,18 @@
+GroupBy
+Count(distinct)
+Filter
+Sum
+
+http://druidwithsql.tumblr.com/post/98578718282/a-first-look-at-druid-with-sql
+
+SELECT page, LONG_SUM(count) AS edit_count 
+FROM wikipedia 
+WHERE interval BETWEEN 2010-01-01T00:00:00.000Z AND 2020-01-01T00:00:00.000Z AND country='United States' 
+BREAK BY 'minute' 
+GROUP BY page;
+
+https://github.com/srikalyc/Sql4D/wiki/Sql4DCompiler
+
+
+
+

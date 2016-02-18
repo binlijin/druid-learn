@@ -1,0 +1,19 @@
+V9
+(1)index.drd
+  第一个string集合，所有的columns：包括dimensions和metrics
+  第二个string集合，所有的dimensions
+  最大最小时间
+  bitmap类型
+(2)time column
+  所有的LONG
+(3)dimension columns
+  ValueType目前都是String
+  hasMultipleValues是否有多值
+  Column value dictionary，value按照大小排序编号。
+  正排，存每个doc该字段的value对应的Integer id。
+  倒排，目前只支持bitmap，就是各个value在哪些doc里面出现过。
+  Segment格式可以见http://druid.io/docs/latest/design/segments.html
+(4)metric columns
+  三种数据类型(LONG,FLOAT,COMPLEX)
+(5)version.bin
+  只存版本号

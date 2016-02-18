@@ -1,0 +1,56 @@
+
+
+[13:09] <binlijin> @fj http请求怎么在broker和historical里面排队的？
+[13:10] <binlijin> 我们发现请求实际处理时间只有几百ms，但是整体时间很长
+[13:12] <@fj> binlijin, look at the metric:
+[13:13] <@fj> "segment/scan/pending"
+[13:13] <@fj> on historical
+[13:13] <@fj> it tells you how many segments are pending waiting to be scanned
+[13:14] <@fj> binlijin, segments are stored in a priority queue waiting to be scanned
+[13:14] <binlijin> ok
+[13:15] <binlijin> 我看看
+[13:15] <@fj> look at how PrioritizedExecutorService.java is used
+[13:16] <binlijin> thanks
+[13:16] <@fj> if segment/scan/pending is high, it means too many concurrent queries (needs more CPUs) or segment/scan/time taking too long
+[13:19] <@fj> binlijin, main reasons things are slow
+[13:19] <@fj> 1) segment scans taking too long
+[13:19] <@fj> 2) too many pending segments
+[13:19] <@fj> 3) merge time on broker is slow
+[13:19] <@fj> 4) network time
+[13:19] <@fj> 5) too much paging of segments in and out of memory
+[13:20] <@fj> binlijin: http://druid.io/docs/latest/operations/metrics.html
+[13:21] <binlijin> Good!
+[13:21] <@fj> binlijin: sys/disk/read/size is a goo dmetric to see how much is being read from disk
+[13:23] <binlijin> {“feed":"metrics","timestamp":"2016-01-07T17:46:58.005+08:00","service":"broker","host":"host060:8082","metric":"query/node/time","value":3286,"dataSource":"dws4_pc_sketch","duration":"PT86400S","hasFilters":"false","id":"ea7e64bb-403e-418c-a4b9-d93566853c3c","interval":["2016-01-04T00:00:00.000+08:00/2016-01-05T00:00:00.000+08:00"],"numComplexMetrics":"0","numMetrics":"1","server":"host074:8083","type":"timeseries","cluster":"dru
+[13:23] <binlijin> {"feed":"metrics","timestamp":"2016-01-07T17:46:58.004+08:00","service":"historical","host":"host074:8083","metric":"query/time","value":282,"context":"{\"bySegment\":true,\"finalize\":false,\"intermediate\":true,\"populateCache\":false,\"priority\":0,\"queryId\":\"ea7e64bb-403e-418c-a4b9-d93566853c3c\",\"timeout\":300000}","dataSource":"dws4_pc_sketch","duration":"PT86400S","hasFilters":"false","id":"ea7e64bb-403e-418c-a4b9-d93566853c3c","interval
+[13:23] <binlijin> 这是一个请求里面的两个metrics
+[13:23] <binlijin> broker这边看到的是"metric":"query/node/time","value":3286
+[13:24] <binlijin> 而historical上面的metric是"metric":"query/time","value":282
+[13:24] <binlijin> 所以应该是这个请求在排队。
+[13:26] <binlijin> 从historical的日志来看"segment/scan/pending"基本上未0，偶尔是1
+[13:27] <binlijin> 貌似还是在其他地方。
+[13:28] <@fj> binlijin, how many historical were hit?
+[13:28] <@fj> binlijin, if your cluster is getting large, disable the cache on the broker and turn on the cache on the historical, it will allow historicals to merge their own results
+[13:29] <@fj> otherwise, the broker has to do the merge for all the segments
+[13:31] <binlijin> current we turn on the cache on both broker and historical
+[13:31] <@fj> okay
+[13:31] <@fj> so i see this
+[13:31] <@fj> \"bySegment\":true
+[13:31] <@fj> this means historical is returning per segment results and not doing local merging
+[13:31] <@fj> and broker is doing all the merging
+[13:32] <binlijin> ok
+[13:32] <@fj> druid will cache per segment results
+[13:32] <@fj> so if you turn on caching on the broker
+[13:32] <@fj> no merging occurs at historical level
+[13:32] <@fj> because broker needs to cache every segment's results
+[13:32] <@fj> quick test:
+[13:32] <@fj> issue same query with this "context"
+[13:33] <@fj> "context" : {"useCache":"false", "populateCache":"false"}
+[13:33] <@fj> this will disable caching
+[13:33] <@fj> for the query
+
+
+
+
+
+

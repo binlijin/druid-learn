@@ -1,0 +1,22 @@
+
+(1) QueryResource.doPost
+    $ grep -R "QuerySegmentWalker.class" .
+    ./services/src/main/java/io/druid/cli/CliBridge.java:            binder.bind(QuerySegmentWalker.class).to(BridgeQuerySegmentWalker.class).in(LazySingleton.class);
+    ./services/src/main/java/io/druid/cli/CliBroker.java:            binder.bind(QuerySegmentWalker.class).to(ClientQuerySegmentWalker.class).in(LazySingleton.class);
+    ./services/src/main/java/io/druid/cli/CliHistorical.java:            binder.bind(QuerySegmentWalker.class).to(ServerManager.class).in(LazySingleton.class);
+    ./services/src/main/java/io/druid/cli/CliPeon.java:            binder.bind(QuerySegmentWalker.class).to(ThreadPoolTaskRunner.class);
+    ./services/src/main/java/io/druid/guice/RealtimeModule.java:    binder.bind(QuerySegmentWalker.class).to(RealtimeManager.class).in(ManageLifecycle.class);
+(2) Query.run(QuerySegmentWalker walker, Map<String, Object> context) 
+(3) BaseQuery.run(QuerySegmentWalker walker, Map<String, Object> context)
+  @Override
+  public Sequence<T> run(QuerySegmentWalker walker, Map<String, Object> context)
+  {
+    return run(querySegmentSpec.lookup(this, walker), context);
+  }
+
+  public Sequence<T> run(QueryRunner<T> runner, Map<String, Object> context)
+  {
+    return runner.run(this, context);
+  }
+
+

@@ -1,0 +1,4 @@
+IncrementalIndexSegment 未持久化，在内存中的。
+QueryableIndexSegment   已经写到文件中，持久化后的数据。
+
+

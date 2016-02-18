@@ -1,0 +1,9 @@
+
+官方推荐：
+if your cluster is getting large, disable the cache on the broker and turn on the cache on the historical, it will allow historicals to merge their own results
+otherwise, the broker has to do the merge for all the segments
+
+(1) GROUP_BY 和 SELECT 两种query不使用cache
+(2) Broker开启了cache，那么它会设置传给historical的populateCache为false，bySegment为true。
+
+
