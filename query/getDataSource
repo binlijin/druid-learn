@@ -1,0 +1,4 @@
+
+curl -X 'GET' http://localhost:8081/druid/coordinator/v1/metadata/datasources/wap_benchmark/segments?full
+
+

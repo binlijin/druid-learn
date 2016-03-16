@@ -1,0 +1,42 @@
+{
+    "queryType": "search",
+    "dataSource": {
+        "type": "table",
+        "name": "log_wl"
+    },
+    "filter": null,
+    "granularity": {
+        "type": "all"
+    },
+    "limit": 2147483647,
+    "intervals": {
+        "type": "segments",
+        "segments": [
+            {
+                "itvl": "2015-11-29T00:00:00.000+08:00/2015-11-30T00:00:00.000+08:00",
+                "ver": "2016-03-09T13:16:34.206+08:00",
+                "part": 0
+            }
+        ]
+    },
+    "searchDimensions": [
+        {
+            "type": "default",
+            "dimension": "visitor_id",
+            "outputName": "visitor_id"
+        }
+    ],
+    "query": {
+        "type": "insensitive_contains",
+        "value": ""
+    },
+    "sort": {
+        "type": "lexicographic"
+    },
+    "context": {
+        "useCache":"false",
+        "populateCache":"false",
+        "queryId": "291825be-3cc9-1795-995c-ed74127833bf:3:1"
+    }
+}
+

@@ -1,0 +1,14 @@
+{ 
+  "dataSource":"tableName",
+  "queryType":"timeseries",
+  "granularity":"day",
+  "intervals":["2016-03-01/2100-01-01"],
+  "aggregations":[
+    {
+      "fieldName":"count",
+      "name":"count",
+      "type":"longSum"
+    }
+  ]
+}
+
